@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mon TGV Max</title>
+<meta name="theme-color" content="#A236F0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TGV Max">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Univers Revolut : dégradé violet → nuit, cartes en verre, actions rondes, billets en cartes, barre d'onglets flottante */
+  --violet: #A236F0;
+  --indigo: #6446EC;
+  --night: #262363;
+  --ink: #15123A;
+  --glass: rgba(26, 22, 78, 0.48);
+  --line: rgba(255, 255, 255, 0.10);
+  --chip: rgba(255, 255, 255, 0.16);
+  --field: rgba(255, 255, 255, 0.07);
+  --sheet: #1D1950;
+  --text: #FFFFFF;
+  --muted: rgba(255, 255, 255, 0.68);
+  --warn: #FFB347;
+  --ok: #4BE0A0;
+  --bad: #FF8089;
+  --font: "Onest", -apple-system, "SF Pro Display", BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+  /* Mise en page : une colonne de 480 px max, gouttières de 16 px, marges de sécurité de l'iPhone */
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; font-family: var(--font); color: var(--text); background: var(--ink); -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; }
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: linear-gradient(180deg, var(--violet) 0%, #7B40EE 20%, var(--indigo) 38%, #3B358F 56%, var(--night) 72%, var(--ink) 100%); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+.hidden { display: none !important; }
+svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.view { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.app { max-width: 480px; margin: 0 auto; padding: calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 120px); display: flex; flex-direction: column; gap: 18px; }
+
+/* Barre du haut */
+.top { display: grid; grid-template-columns: minmax(0, 1fr) 46px 46px; gap: 10px; align-items: center; }
+.search { min-width: 0; display: flex; align-items: center; gap: 8px; height: 46px; padding: 0 14px; border-radius: 999px; background: var(--chip); border: 1px solid rgba(255,255,255,.22); }
+.search input { flex: 1; min-width: 0; width: 100%; background: none; border: 0; outline: none; font-size: 16px; -webkit-appearance: none; appearance: none; }
+.search input::placeholder { color: rgba(255,255,255,.82); }
+.search input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.round { width: 46px; height: 46px; border-radius: 50%; border: 1px solid rgba(255,255,255,.22); background: var(--chip); display: grid; place-items: center; padding: 0; }
+
+/* Héros */
+.hero { text-align: center; padding: 34px 0 2px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.hero-label { font-size: 16px; font-weight: 500; color: rgba(255,255,255,.88); }
+.hero-amount { font-size: 58px; line-height: 1; font-weight: 600; letter-spacing: -0.03em; }
+.hero-amount small { font-size: 30px; letter-spacing: -0.02em; }
+.hero-sub { max-width: 320px; font-size: 15px; line-height: 1.35; color: rgba(255,255,255,.88); text-wrap: balance; }
+.hero-sub svg.i { width: 17px; height: 17px; vertical-align: -3px; color: var(--ok); stroke-width: 2.6; }
+.meter { width: 220px; height: 6px; border-radius: 999px; background: rgba(255,255,255,.18); overflow: hidden; }
+.meter > span { display: block; height: 100%; border-radius: inherit; background: #fff; transition: width .5s ease; }
+.meter.full > span { background: var(--ok); }
+.seg { display: inline-flex; gap: 2px; padding: 4px; border-radius: 999px; background: rgba(255,255,255,.14); margin-top: 8px; max-width: 100%; }
+.seg button { border: 0; background: none; height: 34px; padding: 0 14px; border-radius: 999px; font-size: 14px; font-weight: 500; color: rgba(255,255,255,.8); white-space: nowrap; }
+.seg button.on { background: #fff; color: #120f2e; }
+.pill { height: 42px; padding: 0 20px; border-radius: 999px; border: 0; background: rgba(255,255,255,.18); font-size: 16px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+.note { font-size: 13px; color: var(--muted); text-align: center; }
+.note:empty { display: none; }
+
+/* Actions rondes */
+.actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.action { background: none; border: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; line-height: 1.15; text-align: center; padding: 0; }
+.action .disc { width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,.16); display: grid; place-items: center; }
+.action .disc svg.i { width: 25px; height: 25px; }
+
+/* Cartes */
+.card { background: var(--glass); border: 1px solid var(--line); border-radius: 26px; padding: 18px; -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); min-width: 0; }
+.card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.card-head h2 { margin: 0; font-size: 19px; font-weight: 600; text-wrap: balance; }
+.card-sub { font-size: 13px; color: var(--muted); margin: 0 0 6px; }
+.link-btn { background: none; border: 0; color: var(--muted); font-size: 15px; padding: 4px 0; white-space: nowrap; }
+.banner { display: flex; gap: 12px; align-items: center; padding: 14px 16px; border-radius: 20px; background: rgba(255,255,255,.12); font-size: 14px; line-height: 1.4; }
+
+/* Avatars (initiales de la ville sur une couleur propre à chaque ville) */
+.av { position: relative; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; font-size: 15px; color: #fff; flex: none; }
+.av .dot { position: absolute; right: -3px; bottom: -3px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; border: 2.5px solid #2A2470; }
+.av .dot svg.i { width: 11px; height: 11px; stroke-width: 3.2; color: #17123f; }
+.bg-warn { background: var(--warn); } .bg-ok { background: var(--ok); } .bg-bad { background: var(--bad); } .bg-muted { background: #C9C5F2; }
+.warn { color: var(--warn); } .ok { color: var(--ok); } .bad { color: var(--bad); } .muted { color: var(--muted); }
+
+/* Cartes « à confirmer » */
+.carousel { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin: 0 -16px; padding: 0 16px; }
+.carousel::-webkit-scrollbar { display: none; }
+.carousel > .card { flex: 0 0 100%; scroll-snap-align: center; }
+.carousel.multi > .card { flex-basis: calc(100% - 26px); }
+.dots { display: flex; justify-content: center; gap: 6px; margin-top: 12px; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.35); }
+.dots i.on { background: #fff; }
+.cc { display: flex; flex-direction: column; gap: 14px; }
+.cc-main { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+.state-pill { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 4px 11px; border-radius: 999px; font-size: 13px; font-weight: 600; line-height: 1.2; }
+.state-pill svg.i { width: 15px; height: 15px; stroke-width: 2.4; }
+.state-pill.warn { background: rgba(255,179,71,.18); }
+.state-pill.bad { background: rgba(255,128,137,.18); }
+.state-pill.ok { background: rgba(75,224,160,.16); }
+.state-pill.muted { background: rgba(255,255,255,.1); }
+.t-title { font-size: 17px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+.t-sub { font-size: 14px; color: var(--muted); margin-top: 2px; line-height: 1.35; }
+.t-amount { font-size: 17px; font-weight: 600; text-align: right; white-space: nowrap; }
+.t-amount small { display: block; font-size: 12px; font-weight: 400; color: var(--muted); margin-top: 2px; }
+.btns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.btn { min-height: 50px; border-radius: 999px; border: 0; font-size: 16px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; padding: 0 14px; text-align: center; line-height: 1.15; }
+.btn svg.i { width: 20px; height: 20px; }
+.btn-white { background: #fff; color: #120f2e; }
+.btn-glass { background: rgba(255,255,255,.16); color: #fff; }
+.btn-danger { background: rgba(255,128,137,.16); color: var(--bad); }
+.btn[disabled] { opacity: .6; cursor: default; }
+.btn-full { width: 100%; }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,.16); vertical-align: 2px; }
+
+/* Liste des trajets */
+.rows { display: flex; flex-direction: column; }
+.row { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 0; background: none; border: 0; text-align: left; width: 100%; }
+.row + .row { border-top: 1px solid rgba(255,255,255,.07); }
+.row .t-title { font-size: 16px; }
+.row .t-amount { font-size: 16px; }
+.group-label { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 14px 0 0; }
+.empty { color: var(--muted); font-size: 15px; padding: 8px 0; line-height: 1.45; }
+
+/* Rentabilité */
+.net-card { text-align: center; padding: 22px 18px; }
+.net-card span { font-size: 14px; color: var(--muted); }
+.net-card b { display: block; font-size: 44px; font-weight: 600; letter-spacing: -0.02em; margin: 6px 0 4px; }
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.tile { background: var(--glass); border: 1px solid var(--line); border-radius: 22px; padding: 14px 16px; min-width: 0; }
+.tile span { display: block; font-size: 13px; color: var(--muted); }
+.tile b { display: block; font-size: 22px; font-weight: 600; margin-top: 6px; }
+.chart { position: relative; height: 196px; display: flex; align-items: flex-end; gap: 8px; padding-top: 24px; }
+.chart .thr { position: absolute; left: 0; right: 0; border-top: 1.5px dashed rgba(255,255,255,.5); pointer-events: none; }
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 6px; min-width: 0; position: relative; z-index: 1; }
+.bar { width: 100%; max-width: 42px; border-radius: 10px 10px 4px 4px; background: rgba(255,255,255,.35); min-height: 3px; }
+.bar.hit { background: var(--ok); }
+.bar.future { background: repeating-linear-gradient(135deg, rgba(255,255,255,.28) 0 6px, rgba(255,255,255,.1) 6px 12px); }
+.bar-val { font-size: 11px; font-weight: 600; white-space: nowrap; }
+.chart-x { display: flex; gap: 8px; padding-top: 8px; }
+.chart-x span { flex: 1; text-align: center; font-size: 12px; color: var(--muted); text-transform: capitalize; min-width: 0; }
+.mrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 12px; padding: 12px 0; }
+.mrow + .mrow { border-top: 1px solid rgba(255,255,255,.07); }
+.mrow b { font-weight: 600; text-transform: capitalize; }
+.mrow .muted { font-size: 13px; }
+.lead { font-size: 14px; line-height: 1.55; color: rgba(255,255,255,.86); margin: 0; }
+
+/* Barre d'onglets flottante */
+.tabbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 10px); width: calc(100% - 32px); max-width: 448px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 6px; border-radius: 999px; background: rgba(46, 40, 124, .66); border: 1px solid rgba(255,255,255,.16); -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px); z-index: 20; }
+.tab { border: 0; background: none; border-radius: 999px; padding: 7px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; font-weight: 500; color: rgba(255,255,255,.62); }
+.tab.on { background: rgba(255,255,255,.14); color: #fff; }
+
+/* Feuilles du bas */
+.backdrop { position: fixed; inset: 0; background: rgba(9, 7, 32, .62); z-index: 40; display: none; }
+.backdrop.on { display: block; }
+.sheet { position: fixed; left: 50%; bottom: 0; transform: translate(-50%, 102%); width: 100%; max-width: 480px; max-height: calc(100% - env(safe-area-inset-top) - 16px); overflow-y: auto; overscroll-behavior: contain; background: var(--sheet); border-radius: 28px 28px 0 0; border: 1px solid rgba(255,255,255,.1); border-bottom: 0; padding: 10px 16px calc(env(safe-area-inset-bottom) + 24px); z-index: 50; transition: transform .28s ease; display: flex; flex-direction: column; gap: 14px; }
+.sheet { visibility: hidden; transition: transform .28s ease, visibility 0s linear .28s; }
+.sheet.on { transform: translate(-50%, 0); visibility: visible; transition: transform .28s ease; }
+.grab { width: 40px; height: 5px; border-radius: 9px; background: rgba(255,255,255,.25); margin: 0 auto; flex: none; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sheet-head h3 { margin: 0; font-size: 21px; font-weight: 600; }
+.x { width: 38px; height: 38px; border-radius: 50%; border: 0; background: rgba(255,255,255,.12); display: grid; place-items: center; flex: none; padding: 0; }
+.x svg.i { width: 18px; height: 18px; }
+
+/* Billet (aperçu du trajet) */
+.ticket { border-radius: 24px; padding: 16px 18px 18px; background: linear-gradient(140deg, rgba(162,54,240,.55), rgba(100,70,236,.35)); border: 1px solid rgba(255,255,255,.16); }
+.tk-top { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: rgba(255,255,255,.82); }
+.tk-top span:first-child { font-weight: 600; color: #fff; }
+.tk-top span:first-child::first-letter { text-transform: uppercase; }
+.tk-route { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: start; gap: 10px; margin-top: 12px; }
+.tk-st b { display: block; font-size: 26px; font-weight: 600; letter-spacing: -0.01em; }
+.tk-st span { display: block; font-size: 14px; line-height: 1.3; color: rgba(255,255,255,.85); margin-top: 2px; overflow-wrap: anywhere; }
+.tk-st.right { text-align: right; }
+.tk-st.miss span { color: var(--warn); }
+.tk-line { display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 6px; font-size: 12px; color: rgba(255,255,255,.8); }
+.tk-line i { position: relative; display: block; width: 58px; height: 2px; background: repeating-linear-gradient(90deg, rgba(255,255,255,.7) 0 5px, transparent 5px 9px); }
+.tk-line i::before, .tk-line i::after { content: ""; position: absolute; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: #fff; }
+.tk-line i::before { left: -4px; } .tk-line i::after { right: -4px; }
+
+/* Comparaison */
+.cmp { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.cmp div { padding: 11px 12px; border-radius: 16px; background: rgba(255,255,255,.06); min-width: 0; }
+.cmp div.me { background: rgba(75,224,160,.14); }
+.cmp span { display: block; font-size: 12px; line-height: 1.25; color: var(--muted); }
+.cmp b { display: block; font-size: 18px; font-weight: 600; margin-top: 4px; white-space: nowrap; }
+.cmp-foot { font-size: 13px; color: var(--muted); line-height: 1.45; margin-top: 8px; }
+.cmp-foot b { color: #fff; font-weight: 600; }
+.note-est { font-size: 13px; line-height: 1.45; color: var(--warn); padding: 10px 12px; border-radius: 14px; background: rgba(255,179,71,.12); }
+
+/* Formulaire */
+.edit-box { border-radius: 20px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
+.edit-box > summary { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; font-size: 15px; font-weight: 600; cursor: pointer; }
+.edit-box > summary::-webkit-details-marker { display: none; }
+.edit-box > summary::after { content: ""; width: 9px; height: 9px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); margin-top: -4px; transition: transform .2s; }
+.edit-box[open] > summary::after { transform: rotate(225deg); margin-top: 4px; }
+.edit-body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 14px; }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field.wide { grid-column: 1 / -1; }
+.field > label { font-size: 13px; color: var(--muted); }
+.field input {
+  -webkit-appearance: none; appearance: none; display: block; width: 100%; min-width: 0; max-width: 100%;
+  height: 48px; margin: 0; padding: 0 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,.14); background: var(--field);
+  font-size: 16px; line-height: 1.2; outline: none; text-align: left;
+}
+.field input[type="date"], .field input[type="time"], .field input[type="month"] { line-height: 46px; padding-top: 0; padding-bottom: 0; }
+.field input::-webkit-date-and-time-value { text-align: left; margin: 0; }
+.field input::-webkit-datetime-edit { padding: 0; }
+.field input::-webkit-calendar-picker-indicator { filter: invert(1); opacity: .55; margin-left: 4px; }
+.field input:focus { border-color: rgba(255,255,255,.55); }
+.field.miss input { border-color: var(--warn); }
+.opt-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.chipb { min-height: 36px; padding: 6px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.08); font-size: 14px; line-height: 1.2; text-align: left; }
+.chipb.on { background: #fff; color: #120f2e; border-color: #fff; }
+.help { font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0; }
+.err { color: var(--warn); font-size: 14px; }
+.err:empty { display: none; }
+
+/* Interrupteur façon iOS */
+.toggle { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 18px; background: rgba(255,255,255,.06); font-size: 15px; line-height: 1.35; cursor: pointer; }
+.toggle .grow { flex: 1; min-width: 0; }
+.toggle small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+.toggle input { -webkit-appearance: none; appearance: none; flex: none; position: relative; width: 51px; height: 31px; margin: 0; border-radius: 999px; background: rgba(255,255,255,.22); transition: background .2s; cursor: pointer; }
+.toggle input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.25); transition: transform .2s; }
+.toggle input:checked { background: var(--ok); }
+.toggle input:checked::after { transform: translateX(20px); }
+.toggle input:disabled { opacity: .45; }
+
+/* Collage */
+.pz { min-height: 150px; border-radius: 22px; border: 2px dashed rgba(255,255,255,.35); background: rgba(255,255,255,.05); padding: 18px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 15px; line-height: 1.45; color: var(--muted); outline: none; -webkit-user-select: text; user-select: text; overflow: hidden; }
+.pz:focus { border-color: #fff; background: rgba(255,255,255,.08); }
+.pz:empty::before { content: attr(data-ph); pointer-events: none; }
+.pz.done { min-height: 64px; padding: 12px; font-size: 14px; }
+.pz img { max-width: 100%; max-height: 120px; }
+.pz-msg { font-size: 14px; color: var(--muted); text-align: center; }
+.pz-msg:empty { display: none; }
+.scan-box { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 14px; align-items: center; padding: 12px; border-radius: 18px; background: rgba(255,255,255,.06); }
+.scan-box img { width: 64px; height: 96px; object-fit: cover; object-position: top; border-radius: 10px; background: rgba(255,255,255,.1); }
+.prog { height: 6px; border-radius: 9px; background: rgba(255,255,255,.14); overflow: hidden; margin-top: 8px; }
+.prog > span { display: block; height: 100%; width: 0; background: #fff; transition: width .2s; }
+.slot { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 16px; background: rgba(255,255,255,.06); font-size: 15px; }
+.slot .grow { flex: 1; min-width: 0; }
+.slot small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; overflow-wrap: anywhere; }
+details.raw { font-size: 13px; color: var(--muted); }
+details.raw pre { white-space: pre-wrap; font-family: ui-monospace, Menlo, monospace; font-size: 12px; background: rgba(0,0,0,.22); padding: 10px; border-radius: 12px; max-height: 180px; overflow: auto; }
+.est { color: var(--warn); }
+.toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 12px); transform: translate(-50%, -20px); opacity: 0; background: #fff; color: #120f2e; padding: 12px 18px; border-radius: 999px; font-size: 15px; font-weight: 500; z-index: 60; transition: .25s; pointer-events: none; width: max-content; max-width: calc(100% - 40px); text-align: center; line-height: 1.3; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+@media (max-width: 380px) {
+  .hero-amount { font-size: 50px; } .action { font-size: 13px; } .action .disc { width: 56px; height: 56px; }
+  .seg button { padding: 0 11px; font-size: 13px; } .tk-st b { font-size: 23px; } .cmp b { font-size: 16px; }
+}
+</style>
+</head>
+<body>
+<main class="app" id="app">
+  <header class="top">
+    <label class="search" for="q">
+      <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Rechercher" autocomplete="off">
+    </label>
+    <button class="round" data-act="tab" data-tab="stats" aria-label="Voir la rentabilité">
+      <svg class="i" viewBox="0 0 24 24" style="stroke-width:3.2"><path d="M6 20v-6M12 20V6M18 20v-9"/></svg>
+    </button>
+    <button class="round" data-act="settings" aria-label="Réglages">
+      <svg class="i" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M3 10.5h18"/></svg>
+    </button>
+  </header>
+
+  <section id="view-home" class="view">
+    <div class="hero">
+      <div class="hero-label" id="heroLabel">Max Jeune · novembre</div>
+      <div class="hero-amount num" id="heroAmount">0 €</div>
+      <div class="hero-sub" id="heroSub"></div>
+      <div class="meter" id="meter"><span id="meterFill" style="width:0%"></span></div>
+      <div class="seg" role="group" aria-label="Comparer avec">
+        <button data-act="compare" data-v="avantage" id="segAv">vs Carte Avantage</button>
+        <button data-act="compare" data-v="plein" id="segPl">vs plein tarif</button>
+      </div>
+      <button class="pill" data-act="scope" id="scopeBtn"><span id="scopeTxt">Ce mois-ci</span>
+        <svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="m7 10 5 5 5-5"/></svg>
+      </button>
+      <div class="note" id="note"></div>
+    </div>
+
+    <div class="actions">
+      <button class="action" data-act="scan"><span class="disc"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="m21 15-5-5L6 19"/></svg></span>Photos</button>
+      <button class="action" data-act="paste"><span class="disc"><svg class="i" viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="4" rx="1.5"/><path d="M8 5H6.5A2.5 2.5 0 0 0 4 7.5v11A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5v-11A2.5 2.5 0 0 0 17.5 5H16"/></svg></span>Coller</button>
+      <button class="action" data-act="manual"><span class="disc"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Saisir</button>
+      <button class="action" data-act="settings"><span class="disc"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="19" cy="12" r="1.3" fill="currentColor"/></svg></span>Plus</button>
+    </div>
+
+    <div id="demoBanner" class="banner hidden">
+      <svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
+      <div><b>Trajets d'exemple.</b> Colle ou choisis ta première capture « Choisissez un tarif » : les exemples disparaîtront.</div>
+    </div>
+
+    <div id="confirmArea"></div>
+
+    <div class="card">
+      <div class="card-head"><h2>Trajets</h2><button class="link-btn" data-act="tab" data-tab="trips">Tout voir</button></div>
+      <div class="rows" id="homeRows"></div>
+    </div>
+  </section>
+
+  <section id="view-trips" class="view hidden">
+    <div class="card">
+      <div class="card-head"><h2>Tous mes trajets</h2></div>
+      <div id="tripsList"></div>
+    </div>
+  </section>
+
+  <section id="view-stats" class="view hidden">
+    <div class="card net-card" id="netCard"></div>
+    <div class="tiles" id="tiles"></div>
+    <div class="card">
+      <div class="card-head"><h2 id="chartTitle">Par mois</h2></div>
+      <p class="card-sub" id="chartSub"></p>
+      <div id="chart"></div>
+    </div>
+    <div class="card">
+      <p class="lead" id="statsLead"></p>
+      <div id="monthRows" style="margin-top:6px"></div>
+    </div>
+  </section>
+</main>
+
+<nav class="tabbar" aria-label="Navigation">
+  <button class="tab on" data-act="tab" data-tab="home"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="14" rx="4"/><path d="M5 11h14M9 17l-2 4M15 17l2 4M9 14h.01M15 14h.01"/></svg>Accueil</button>
+  <button class="tab" data-act="tab" data-tab="trips"><svg class="i" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg>Trajets</button>
+  <button class="tab" data-act="tab" data-tab="stats"><svg class="i" viewBox="0 0 24 24"><path d="M6 20v-6M12 20V6M18 20v-9"/></svg>Rentabilité</button>
+</nav>
+
+<input type="file" id="file" accept="image/*" multiple class="hidden">
+<input type="file" id="importFile" accept=".json,application/json,text/plain" class="hidden">
+<div class="backdrop" id="backdrop" data-act="close"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="parser.js"></script>
+<script>
+'use strict';
+const P = window.TGVMax;
+const DEFAULTS = { monthlyPrice: 79, plan: 'Max Jeune', startMonth: '', deadline: '17:00', remind1: '09:00', remind2: '14:00', cardPrice: 49, compare: 'avantage' };
+const LS_KEY = 'mon-tgvmax-v1';
+const TESS = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js';
+const TESS_CORE = 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.0';
+const FAMILY = { INOUI: 'TGV INOUI', OUIGO: 'OUIGO', INTERCITES: 'INTERCITÉS' };
+const IN_FRAME = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+const CAN_DOWNLOAD = !IN_FRAME && !window.claude && !/claude|anthropic/i.test(location.hostname); // hors de Claude (GitHub Pages, écran d'accueil)
+const state = { trips: [], settings: { ...DEFAULTS }, loaded: false, scope: 'month', tab: 'home', filter: '', mcp: null, me: null, sheet: null, form: null };
+
+// ---------- Outils ----------
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const eur = v => { const n = Math.round((+v || 0) * 100) / 100; return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 }).format(n); };
+const signed = v => (v > 0.004 ? '+' : v < -0.004 ? '−' : '') + eur(Math.abs(v));
+const fmtShort = d => new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }).format(d);
+const fmtLong = d => new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).format(d);
+const fmtHour = d => d.getMinutes() ? d.getHours() + ' h ' + String(d.getMinutes()).padStart(2, '0') : d.getHours() + ' h';
+const hourOf = s => fmtHour(new Date(2000, 0, 1, ...String(s || '0:0').split(':').map(Number)));
+const fmtDur = m => !m ? '' : m < 60 ? m + ' min' : Math.floor(m / 60) + 'h' + String(m % 60).padStart(2, '0');
+const monthName = k => new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(P.parseISO(k + '-01'));
+const monthShort = k => new Intl.DateTimeFormat('fr-FR', { month: 'short' }).format(P.parseISO(k + '-01')).replace('.', '');
+const city = s => String(s || '').replace(/ (Gare de Lyon|Montparnasse|Nord|Est|Bercy|Austerlitz|Saint-Lazare|Part-Dieu|Perrache|Saint-Charles|Saint-Jean|Matabiau|Saint-Roch|Sud de France|Ville|Centre|TGV|Flandres|Europe|Saint-Laud)$/, '').replace('Aéroport CDG 2', 'CDG');
+const initials = s => { if (/CDG/.test(s)) return 'CDG'; const w = String(s || '').split(/[\s-]+/).filter(x => x && !/^(de|du|des|la|le|l|en|sur)$/i.test(x)); return (w.length > 1 ? w[0][0] + w[1][0] : (w[0] || '?').slice(0, 2)).toUpperCase(); };
+const PALETTE = ['#E8618C', '#3B9BEF', '#22B583', '#EE8F2E', '#8B6CF6', '#12A9B8', '#E5654B'];
+const colorFor = s => { let h = 0; for (const ch of String(s || '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return PALETTE[h % PALETTE.length]; };
+const newId = () => 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+const now = () => new Date();
+const ref = () => state.settings.compare === 'plein' ? 'plein' : 'avantage';
+const dlLabel = () => hourOf(state.settings.deadline);
+const trainLabel = t => t.train || ((FAMILY[t.family] || 'TGV INOUI') + (t.trainNo ? ' ' + t.trainNo : ''));
+const timeLeft = ms => { const m = Math.max(1, Math.round(ms / 60000)); if (m < 60) return m + ' min'; const h = Math.round(m / 60); return h < 48 ? h + ' h' : Math.round(h / 24) + ' jours'; };
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 3400); }
+function setNote(msg) { $('#note').textContent = msg || ''; }
+
+const ICON = {
+  clock: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2"/></svg>',
+  check: '<svg class="i" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
+  alert: '<svg class="i" viewBox="0 0 24 24"><path d="M12 7v6M12 17h.01"/></svg>',
+  euro: '<svg class="i" viewBox="0 0 24 24"><path d="M17 7.5A6 6 0 1 0 17 16.5M5 10.5h8M5 13.5h8"/></svg>',
+  bell: '<svg class="i" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16ZM10 20.5a2 2 0 0 0 4 0"/></svg>',
+  cal: '<svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
+  close: '<svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  train: '<svg class="i" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="14" rx="4"/><path d="M5 11h14M9 17l-2 4M15 17l2 4"/></svg>',
+  paste: '<svg class="i" viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="4" rx="1.5"/><path d="M8 5H6.5A2.5 2.5 0 0 0 4 7.5v11A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5v-11A2.5 2.5 0 0 0 17.5 5H16"/></svg>'
+};
+const STATUS = {
+  open: { cls: 'warn', dot: 'bg-warn', icon: 'clock' },
+  late: { cls: 'bad', dot: 'bg-bad', icon: 'alert' },
+  planned: { cls: 'muted', dot: 'bg-muted', icon: 'clock' },
+  confirmed: { cls: 'ok', dot: 'bg-ok', icon: 'check' },
+  ticket: { cls: 'muted', dot: 'bg-muted', icon: 'euro' },
+  past: { cls: 'muted', dot: 'bg-ok', icon: 'check' }
+};
+function statusOf(t) { return P.tripStatus(t, now(), state.settings.deadline); }
+function statusText(t, long) {
+  const s = statusOf(t), w = P.confirmWindow(t, state.settings.deadline);
+  if (s === 'open') return long ? timeLeft(w.deadline - now()) + ' pour confirmer' : 'À confirmer · reste ' + timeLeft(w.deadline - now());
+  if (s === 'late') return 'Délai de confirmation passé';
+  if (s === 'planned') return 'À confirmer dès le ' + fmtShort(w.opens);
+  if (s === 'confirmed') return 'Confirmé';
+  if (s === 'ticket') return 'Billet payant · rien à confirmer';
+  return 'Effectué';
+}
+
+// ---------- Exemples (tant qu'aucun trajet n'est enregistré) ----------
+function demoTrips() {
+  const d = n => P.isoDate(P.addDays(now(), n));
+  return [
+    { id: 'demo1', demo: true, from: 'Paris Gare de Lyon', to: 'Lyon Part-Dieu', date: d(-8), dep: '08:04', arr: '10:00', family: 'INOUI', classe: '2de', originalPrice: 74, paidPrice: 0, confirmed: true },
+    { id: 'demo2', demo: true, from: 'Lyon Part-Dieu', to: 'Paris Gare de Lyon', date: d(-6), dep: '19:04', arr: '21:00', family: 'INOUI', classe: '2de', originalPrice: 61, paidPrice: 42 },
+    { id: 'demo3', demo: true, from: 'Lille Flandres', to: 'Paris Nord', date: d(2), dep: '07:42', arr: '08:45', family: 'INOUI', classe: '2de', originalPrice: 71, paidPrice: 0, confirmed: false },
+    { id: 'demo4', demo: true, from: 'Lille Flandres', to: 'Aéroport CDG 2 TGV', date: d(6), dep: '11:30', arr: '12:25', family: 'OUIGO', classe: '2de', originalPrice: 28, paidPrice: 0, priceEstimated: true, confirmed: false }
+  ];
+}
+const isDemo = () => state.trips.length === 0;
+const trips = () => isDemo() ? demoTrips() : state.trips;
+const findTrip = id => trips().find(t => t.id === id);
+
+// ---------- Sauvegarde : base de l'artifact dans Claude, sinon ce téléphone ----------
+const store = {
+  mode: 'loading', root: null, col: null, chains: {},
+  async init() {
+    const c = window.claude;
+    if (c && typeof c.use === 'function') {
+      try {
+        const [db, user] = await Promise.all([c.use('db'), c.use('user')]);
+        const uid = user ? await user.id() : null;
+        if (db && uid) {
+          this.root = db.doc('data/users/' + uid + '/tgvmax');
+          this.col = this.root.collection('trips');
+          this.mode = 'db';
+          this.subscribe();
+          return;
+        }
+      } catch (e) { /* bascule sur le téléphone */ }
+    }
+    this.useLocal();
+  },
+  subscribe() {
+    let confirmed = false;
+    setNote('Chargement de tes trajets…');
+    const timer = setTimeout(() => { if (!confirmed) setNote('Tes trajets ne sont pas encore joignables : ils s’afficheront dès que la connexion revient.'); }, 10000);
+    this.col.onSnapshot(qs => {
+      state.trips = qs.docs.map(d => ({ id: d.id, ...d.data() }));
+      state.loaded = true;
+      if (!qs.metadata.fromCache) { confirmed = true; clearTimeout(timer); setNote(''); }
+      renderAll();
+    }, err => {
+      clearTimeout(timer); state.loaded = true;
+      setNote(err.code === 'revoked' ? '' : 'Impossible de lire tes trajets pour l’instant (' + err.code + ').');
+      renderAll();
+    });
+    this.root.onSnapshot(snap => { state.settings = { ...DEFAULTS, ...(snap.exists ? snap.data() : {}) }; renderAll(); }, () => {});
+  },
+  useLocal() {
+    this.mode = 'local';
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) { const d = JSON.parse(raw); state.trips = d.trips || []; state.settings = { ...DEFAULTS, ...(d.settings || {}) }; }
+    } catch (e) { this.mode = 'memory'; }
+    state.loaded = true; setNote(''); renderAll();
+  },
+  persist() {
+    if (this.mode !== 'local') return;
+    try { localStorage.setItem(LS_KEY, JSON.stringify({ trips: state.trips, settings: state.settings })); } catch (e) { this.mode = 'memory'; }
+  },
+  queue(key, fn) { const p = (this.chains[key] || Promise.resolve()).then(fn, fn); this.chains[key] = p.catch(() => {}); return p; },
+  async saveTrip(trip) {
+    const { id, demo, ...body } = trip;
+    const clean = JSON.parse(JSON.stringify(body));
+    if (this.mode === 'db') return this.queue(id, () => this.col.doc(id).set(clean));
+    const i = state.trips.findIndex(t => t.id === id);
+    if (i >= 0) state.trips[i] = { id, ...clean }; else state.trips.push({ id, ...clean });
+    this.persist(); renderAll();
+  },
+  async deleteTrip(id) {
+    if (this.mode === 'db') return this.queue(id, () => this.col.doc(id).delete());
+    state.trips = state.trips.filter(t => t.id !== id); this.persist(); renderAll();
+  },
+  async saveSettings(s) {
+    state.settings = { ...DEFAULTS, ...s };
+    renderAll();
+    if (this.mode === 'db') return this.queue('settings', () => this.root.set(JSON.parse(JSON.stringify(state.settings))));
+    this.persist();
+  }
+};
+
+// ---------- Rappels : 2 événements de 15 min la veille, notification à l'heure ----------
+async function initMcp() {
+  const c = window.claude;
+  if (!c || typeof c.use !== 'function') return;
+  try { state.mcp = await c.use('mcp'); } catch (e) { state.mcp = null; }
+  renderAll();
+}
+function buildReminders(t) {
+  return P.reminderSlots(t, now(), state.settings).map(s => {
+    const route = city(t.from) + ' → ' + city(t.to);
+    const sameDay = P.isoDate(s.start) === P.isoDate(s.deadline);
+    return {
+      start: s.start, end: s.end, startLocal: P.localStamp(s.start), endLocal: P.localStamp(s.end),
+      title: s.kind === 'first' ? '🚄⏰ Confirmer TGV Max · ' + route : '🚨🚄 Dernier rappel TGV Max · ' + route + ' (avant ' + dlLabel() + ')',
+      desc: [
+        '⏰ À confirmer avant ' + dlLabel() + (sameDay ? ' aujourd’hui' : ' le ' + fmtLong(s.deadline)),
+        '🚆 Départ ' + fmtLong(s.dep) + ' à ' + t.dep + ' · ' + trainLabel(t),
+        '📍 ' + t.from + ' → ' + t.to,
+        '💶 ' + eur(t.originalPrice) + ' au plein tarif, 0 € avec Max',
+        '👉 Confirme dans ton espace MAX (app SNCF Connect)',
+        '⚠️ Sans confirmation, la réservation est annulée automatiquement.'
+      ].join('\n')
+    };
+  });
+}
+function gcalLink(r) {
+  const f = s => s.replace(/[-:]/g, '');
+  let tz = 'Europe/Paris'; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (e) {}
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(r.title) +
+    '&dates=' + f(r.startLocal) + '/' + f(r.endLocal) + '&ctz=' + encodeURIComponent(tz) + '&details=' + encodeURIComponent(r.desc);
+}
+// Fichier .ics (Calendrier de l'iPhone) : garde l'alerte « à l'heure de l'événement »
+function buildIcs(t, rems) {
+  const z = d => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const e = s => String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+  const enc = new TextEncoder();
+  const fold = line => { const out = []; let cur = ''; for (const ch of line) { if (enc.encode(cur + ch).length > 72) { out.push(cur); cur = ' ' + ch; } else cur += ch; } out.push(cur); return out.join('\r\n'); };
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Mon TGV Max//FR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
+  rems.forEach((r, i) => lines.push('BEGIN:VEVENT', 'UID:' + t.id + '-' + i + '-' + z(r.start) + '@mon-tgvmax', 'DTSTAMP:' + z(new Date()),
+    'DTSTART:' + z(r.start), 'DTEND:' + z(r.end), 'SUMMARY:' + e(r.title), 'DESCRIPTION:' + e(r.desc),
+    'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + e(r.title), 'TRIGGER:-PT0M', 'END:VALARM', 'END:VEVENT'));
+  lines.push('END:VCALENDAR');
+  return lines.map(fold).join('\r\n') + '\r\n';
+}
+function download(name, mime, text) {
+  const url = URL.createObjectURL(new Blob([text], { type: mime }));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+const CAL_ERRORS = {
+  server_not_connected: 'Google Agenda n’est pas connecté à Claude. Ajoute « Google Calendar » dans claude.ai → Réglages → Connecteurs, ou utilise les liens ci-dessous.',
+  server_not_found: 'Le connecteur Google Agenda n’existe plus. Ajoute-le à nouveau dans claude.ai → Réglages → Connecteurs.',
+  needs_reauth: 'La connexion à Google Agenda a expiré. Reconnecte « Google Calendar » dans claude.ai → Réglages → Connecteurs.',
+  selection_required: 'Plusieurs comptes Google Agenda sont connectés : choisis-en un dans la fenêtre de Claude, puis réessaie.',
+  approval_required: 'Il faut autoriser l’app à écrire dans ton agenda. Réessaie et accepte la demande de Claude.',
+  not_in_manifest: 'L’accès à Google Agenda est désactivé pour cette app. Utilise les liens ci-dessous.',
+  blocked_by_policy: 'Ton organisation bloque l’accès à Google Agenda depuis cette app. Utilise les liens ci-dessous.'
+};
+async function addReminders(t, btn) {
+  if (t.demo) return toast('C’est un exemple : ajoute un vrai trajet pour créer les rappels.');
+  if (!P.isMaxTrip(t)) return toast('Billet payant : rien à confirmer, donc pas de rappel.');
+  const rems = buildReminders(t);
+  if (!rems.length) return toast('Trop tard pour un rappel : la limite était la veille à ' + dlLabel() + '.');
+  if (!state.mcp) return openCalFallback(t, rems, null);
+  if (btn) { btn.disabled = true; btn.dataset.label = btn.innerHTML; btn.textContent = 'Ajout…'; }
+  const created = [];
+  try {
+    for (const r of rems) {
+      const res = await state.mcp.callTool('Google Calendar', 'create_event', {
+        summary: r.title, description: r.desc, startTime: r.startLocal, endTime: r.endLocal,
+        overrideReminders: [{ method: 'popup', minutes: 0 }]
+      });
+      const p = res && res.payload && typeof res.payload === 'object' ? res.payload : {};
+      created.push({ at: r.startLocal, id: p.id || p.eventId || null });
+    }
+    await store.saveTrip({ ...t, reminder: { via: 'agenda', addedAt: new Date().toISOString(), events: created } });
+    toast((created.length > 1 ? created.length + ' rappels ajoutés' : 'Rappel ajouté') + ' à Google Agenda 📅');
+  } catch (e) {
+    if (created.length) await store.saveTrip({ ...t, reminder: { via: 'agenda', addedAt: new Date().toISOString(), events: created, partial: true } }).catch(() => {});
+    const rest = rems.slice(created.length);
+    if (!btn && $('#sheet').classList.contains('on')) toast('Rappels non ajoutés : utilise le bouton Rappels du trajet.');
+    else openCalFallback(t, rest, e && e.code);
+  } finally {
+    if (btn && btn.isConnected) { btn.disabled = false; btn.innerHTML = btn.dataset.label || btn.innerHTML; }
+  }
+}
+function openCalFallback(t, rems, code) {
+  const msg = code ? (CAL_ERRORS[code] || 'Je ne sais pas si les rappels ont été créés. Regarde ton agenda avant de réessayer, ou utilise les liens ci-dessous.')
+    : CAN_DOWNLOAD ? 'Ajoute les ' + (rems.length > 1 ? rems.length + ' rappels' : 'rappel') + ' d’un coup au Calendrier de l’iPhone (notification à l’heure), ou un par un dans Google Agenda.'
+    : 'Ouvre chaque rappel dans Google Agenda (déjà rempli), puis appuie sur Enregistrer.';
+  const resume = state.sheet && state.sheet.kind !== 'cal' ? state.sheet : (state.sheet && state.sheet.resume) || null;
+  state.sheet = { kind: 'cal', tripId: t.id, total: rems.length, done: new Set(), resume, rems };
+  openSheet('<div class="sheet-head"><h3 id="sheetTitle">Rappels</h3><button class="x" data-act="close" aria-label="Fermer">' + ICON.close + '</button></div>' +
+    '<p class="help" style="font-size:15px;color:#fff">' + esc(msg) + '</p>' +
+    rems.map(r => '<div class="slot">' + ICON.bell + '<div class="grow"><b>' + esc(fmtShort(r.start)) + ' à ' + esc(fmtHour(r.start)) + '</b><small>' + esc(r.title) + '</small></div></div>').join('') +
+    (CAN_DOWNLOAD ? '<button class="btn btn-white btn-full" data-act="ics">' + ICON.cal + 'Ajouter au Calendrier de l’iPhone</button>' : '') +
+    rems.map((r, i) => '<a class="btn ' + (CAN_DOWNLOAD ? 'btn-glass' : 'btn-white') + ' btn-full" href="' + esc(gcalLink(r)) + '" target="_blank" rel="noopener" data-act="linkdone" data-n="' + i + '">Google Agenda · ' + esc(fmtHour(r.start)) + '</a>').join('') +
+    '<p class="help">' + (CAN_DOWNLOAD ? 'Si ton compte Google est ajouté dans Réglages → Calendrier de l’iPhone, choisis ton agenda Google au moment d’ajouter. ' : '') +
+    'Par lien, Google Agenda met ta notification par défaut.</p>' +
+    '<button class="btn btn-glass btn-full" data-act="caldone">Terminé</button>');
+}
+function finishCal(save) {
+  const s = state.sheet; if (!s || s.kind !== 'cal') return;
+  const t = findTrip(s.tripId);
+  if (save && t && !t.demo) store.saveTrip({ ...t, reminder: { via: 'link', addedAt: new Date().toISOString() } }).catch(() => {});
+  const r = s.resume;
+  if (r && r.queue && r.idx < r.queue.length - 1) { state.sheet = r; r.idx++; renderReview(); }
+  else { state.sheet = r; closeSheet(); }
+}
+
+// ---------- Lecture des captures (OCR local Tesseract + règles du parseur, sans IA) ----------
+function loadScript(src) {
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('script')); document.head.appendChild(s); });
+}
+const OCR = {
+  worker: null, loading: null, onLog: null,
+  async ensure() {
+    if (this.worker) return this.worker;
+    if (!this.loading) this.loading = (async () => {
+      if (!window.Tesseract) await withTimeout(loadScript(TESS), 20000);
+      const workerPath = new URL('ocr-worker.js', location.href).href;
+      const base = { workerPath, corePath: TESS_CORE, langPath: 'https://tessdata.local/fra', gzip: false, cacheMethod: 'none',
+        logger: m => this.onLog && this.onLog(m), errorHandler: e => console.warn('OCR', e) };
+      try { return await withTimeout(Tesseract.createWorker('fra', 1, { ...base, workerBlobURL: false }), 30000); }
+      catch (e) { return await withTimeout(Tesseract.createWorker('fra', 1, { ...base, workerBlobURL: true }), 30000); }
+    })();
+    try { this.worker = await this.loading; return this.worker; } catch (e) { this.loading = null; throw e; }
+  },
+  async read(blob, onLog) {
+    this.onLog = onLog;
+    const w = await this.ensure();
+    const canvas = await prepImage(blob);
+    const { data } = await withTimeout(w.recognize(canvas), 90000);
+    return data && data.text || '';
+  }
+};
+// Niveaux de gris, réduction, inversion si la capture est en mode sombre (cas de SNCF Connect)
+async function prepImage(blob) {
+  const url = URL.createObjectURL(blob);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const scale = Math.min(1, 1400 / img.naturalWidth);
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.naturalWidth * scale); c.height = Math.round(img.naturalHeight * scale);
+    const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0, c.width, c.height);
+    const im = ctx.getImageData(0, 0, c.width, c.height), d = im.data;
+    let sum = 0;
+    for (let i = 0; i < d.length; i += 4) { const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; d[i] = d[i + 1] = d[i + 2] = g; sum += g; }
+    if (sum / (d.length / 4) < 115) for (let i = 0; i < d.length; i += 4) { d[i] = d[i + 1] = d[i + 2] = 255 - d[i]; }
+    ctx.putImageData(im, 0, 0);
+    return c;
+  } finally { URL.revokeObjectURL(url); }
+}
+
+// ---------- Collage d'une capture (image) ou de son texte ----------
+function clipboardImage(cd) {
+  if (!cd) return null;
+  const f = [...(cd.files || [])].find(x => x.type && x.type.startsWith('image/'));
+  if (f) return f;
+  for (const it of [...(cd.items || [])]) if (it.kind === 'file' && it.type.startsWith('image/')) { const g = it.getAsFile(); if (g) return g; }
+  return null;
+}
+function imgToBlob(img) {
+  return new Promise((res, rej) => {
+    const go = () => { try { const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight; c.getContext('2d').drawImage(img, 0, 0); c.toBlob(b => b ? res(b) : rej(new Error('blob')), 'image/png'); } catch (e) { rej(e); } };
+    if (img.complete && img.naturalWidth) go(); else { img.onload = go; img.onerror = rej; }
+  });
+}
+function startScanWith(blobs) {
+  const queue = blobs.map(b => ({ file: b, url: URL.createObjectURL(b) }));
+  if (state.sheet && state.sheet.kind === 'paste') state.sheet = null;
+  openReview('scan', queue);
+}
+function handlePastedText(text) {
+  const trimmed = String(text || '').trim();
+  if (!trimmed) return;
+  if (/^\{[\s\S]*"app"\s*:\s*"mon-tgvmax"/.test(trimmed)) return openImport(trimmed);
+  const d = P.parseText(trimmed, now());
+  fillForm(d, false);
+  const z = $('#pz'); if (z) { z.classList.add('done'); z.dataset.ph = 'Texte collé ✓ Colle autre chose pour remplacer'; }
+  $('#pz-msg').innerHTML = d.found >= 5 ? '<span class="ok">Texte lu.</span> Vérifie le billet ci-dessous.' : '<span class="warn">' + d.found + ' info' + (d.found > 1 ? 's' : '') + ' sur 5 trouvée' + (d.found > 1 ? 's' : '') + '.</span> Complète dans « Modifier les infos ».';
+  if (d.found < 5) $('#f-details').open = true;
+}
+function bindPasteZone() {
+  const z = $('#pz'); if (!z) return;
+  z.addEventListener('paste', e => {
+    const img = clipboardImage(e.clipboardData);
+    if (img) { e.preventDefault(); return startScanWith([img]); }
+    const text = e.clipboardData && e.clipboardData.getData('text/plain');
+    if (text) { e.preventDefault(); return handlePastedText(text); }
+    setTimeout(() => { const im = z.querySelector('img'); z.innerHTML = ''; if (im) imgToBlob(im).then(b => startScanWith([b])).catch(() => toast('Je n’arrive pas à lire cette image : utilise « Photos ».')); }, 80);
+  });
+  z.addEventListener('drop', e => { const f = [...(e.dataTransfer?.files || [])].filter(x => x.type.startsWith('image/')); if (f.length) { e.preventDefault(); startScanWith(f); } });
+  z.addEventListener('dragover', e => e.preventDefault());
+}
+async function readClipboard() {
+  try {
+    const items = await navigator.clipboard.read();
+    for (const it of items) { const type = it.types.find(x => x.startsWith('image/')); if (type) return startScanWith([await it.getType(type)]); }
+    for (const it of items) if (it.types.includes('text/plain')) return handlePastedText(await (await it.getType('text/plain')).text());
+    toast('Rien à coller : copie d’abord ta capture.');
+  } catch (e) { toast('Touche la zone en pointillés, puis « Coller ».'); }
+}
+document.addEventListener('paste', e => {
+  if ($('#sheet').classList.contains('on')) return;
+  const tag = (e.target && e.target.tagName) || '';
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+  const img = clipboardImage(e.clipboardData);
+  if (img) { e.preventDefault(); startScanWith([img]); }
+});
+
+// ---------- Rendu ----------
+function renderAll() {
+  const all = trips(), st = P.computeStats(all, state.settings, now(), ref());
+  renderHero(st); renderConfirm(all); renderHomeRows(all); renderTripsList(all); renderStats(st);
+  $('#demoBanner').classList.toggle('hidden', !(isDemo() && state.loaded));
+  document.querySelectorAll('.view').forEach(v => { v.classList.toggle('hidden', v.id !== 'view-' + state.tab); });
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === state.tab));
+}
+function moneyHtml(amount) {
+  if (Math.abs(amount - Math.round(amount)) < 0.005) return esc(eur(Math.round(amount)));
+  let html = '';
+  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).formatToParts(amount)
+    .forEach(p => { html += (p.type === 'decimal' || p.type === 'fraction') ? '<small>' + esc(p.value) + '</small>' : esc(p.value); });
+  return html;
+}
+function renderHero(st) {
+  const av = st.ref === 'avantage';
+  const block = state.scope === 'month' ? st.current : { saved: st.savedTotal, count: st.months.filter(m => !m.future).reduce((s, m) => s + m.count, 0) };
+  const cost = state.scope === 'month' ? st.cost : st.paidTotal;
+  const ratio = cost ? block.saved / cost : 0, net = block.saved - cost;
+  const n = block.count + ' trajet' + (block.count > 1 ? 's' : '');
+  let sub;
+  if (av) sub = net >= 0 ? ICON.check + ' ' + esc(signed(net)) + ' de mieux qu’avec la Carte Avantage · ' + n : 'Encore ' + esc(eur(-net)) + ' pour battre la Carte Avantage · ' + n;
+  else sub = ratio >= 1 ? ICON.check + ' Rentabilisé ×' + ratio.toFixed(1).replace('.', ',') + ' · ' + n : 'Encore ' + esc(eur(-net)) + ' pour rentabiliser · ' + n;
+  $('#heroAmount').innerHTML = moneyHtml(block.saved);
+  $('#heroLabel').textContent = (state.settings.plan || 'Max') + ' · ' + (state.scope === 'month' ? monthName(st.current.key) : 'depuis ' + monthName(st.startMonth));
+  $('#heroSub').innerHTML = sub;
+  $('#meterFill').style.width = Math.max(0, Math.min(100, ratio * 100)) + '%';
+  $('#meter').classList.toggle('full', ratio >= 1);
+  $('#segAv').classList.toggle('on', av); $('#segPl').classList.toggle('on', !av);
+  $('#scopeTxt').textContent = state.scope === 'month' ? 'Ce mois-ci' : 'Depuis le début';
+}
+function avatarFor(t, s) {
+  const S = STATUS[s], ini = initials(t.from);
+  return '<div class="av" style="background:' + colorFor(t.from) + (ini.length > 2 ? ';font-size:12px' : '') + '">' + esc(ini) + '<span class="dot ' + S.dot + '">' + ICON[S.icon] + '</span></div>';
+}
+function amountHtml(t) {
+  const sv = P.saving(t, ref()), paid = Number(t.paidPrice) || 0;
+  const small = paid > 0 ? 'payé ' + eur(paid) : (ref() === 'avantage' ? 'vs Carte Av.' : 'vs plein tarif');
+  return '<div class="t-amount num' + (sv < 0 ? ' bad' : '') + '">' + (t.priceEstimated ? '<span class="est">≈ </span>' : '') + esc(signed(sv)) + '<small>' + esc(small) + '</small></div>';
+}
+function reminderControl(t, cls) {
+  if (t.reminder) return '<button class="btn ' + cls + '" disabled>' + ICON.check + 'Rappels ajoutés</button>';
+  if (!buildReminders(t).length) return '<a class="btn ' + cls + '" href="https://www.sncf-connect.com/" target="_blank" rel="noopener">SNCF Connect</a>';
+  return '<button class="btn ' + cls + '" data-act="remind" data-id="' + esc(t.id) + '">' + ICON.bell + 'Rappels</button>';
+}
+function renderConfirm(all) {
+  const order = { late: 0, open: 1, planned: 2 };
+  const list = all.map(t => ({ t, s: statusOf(t) })).filter(x => x.s in order)
+    .sort((a, b) => order[a.s] - order[b.s] || (a.t.date + a.t.dep).localeCompare(b.t.date + b.t.dep)).slice(0, 6);
+  const area = $('#confirmArea');
+  if (!list.length) {
+    area.innerHTML = '<div class="card"><div class="cc-main" style="grid-template-columns:46px minmax(0,1fr)"><div class="av" style="background:var(--ok);color:#10302a">' + ICON.check + '</div><div><div class="t-title">Rien à confirmer</div><div class="t-sub">Tes trajets Max à 0 € s’afficheront ici avec le temps qu’il reste pour confirmer.</div></div></div></div>';
+    return;
+  }
+  area.innerHTML = '<div class="carousel' + (list.length > 1 ? ' multi' : '') + '" id="carousel">' + list.map(({ t, s }) => {
+    const w = P.confirmWindow(t, state.settings.deadline), S = STATUS[s];
+    return '<div class="card cc">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span class="state-pill ' + S.cls + '">' + ICON[S.icon] + esc(statusText(t, true)) + '</span>' + (t.demo ? '<span class="tag">Exemple</span>' : '') + '</div>' +
+      '<div class="cc-main">' + avatarFor(t, s) +
+      '<div style="min-width:0"><div class="t-title">' + esc(city(t.from)) + ' → ' + esc(city(t.to)) + '</div>' +
+      '<div class="t-sub">' + esc(fmtShort(w.dep)) + ' · ' + esc(t.dep) + ' · ' + esc(trainLabel(t)) + '</div></div>' + amountHtml(t) + '</div>' +
+      '<div class="btns">' + reminderControl(t, 'btn-white') + '<button class="btn btn-glass" data-act="confirm" data-id="' + esc(t.id) + '">' + ICON.check + 'Confirmé</button></div></div>';
+  }).join('') + '</div>' + (list.length > 1 ? '<div class="dots" id="dots">' + list.map((_, i) => '<i class="' + (i ? '' : 'on') + '"></i>').join('') + '</div>' : '');
+  const car = $('#carousel'), dots = $('#dots');
+  if (car && dots) car.addEventListener('scroll', () => {
+    const i = Math.round(car.scrollLeft / (car.firstElementChild.offsetWidth + 12));
+    [...dots.children].forEach((d, j) => d.classList.toggle('on', j === i));
+  }, { passive: true });
+}
+function rowHtml(t) {
+  const s = statusOf(t), w = P.confirmWindow(t, state.settings.deadline);
+  return '<button class="row" data-act="edit" data-id="' + esc(t.id) + '">' + avatarFor(t, s) +
+    '<div style="min-width:0"><div class="t-title">' + esc(city(t.from)) + ' → ' + esc(city(t.to)) + '</div>' +
+    '<div class="t-sub">' + esc(fmtShort(w.dep)) + ' · ' + esc(t.dep) + (t.family && t.family !== 'INOUI' ? ' · ' + esc(FAMILY[t.family]) : '') + '</div>' +
+    (s === 'past' ? '' : '<div class="t-sub ' + STATUS[s].cls + '">' + esc(statusText(t)) + '</div>') + '</div>' + amountHtml(t) + '</button>';
+}
+const byDateDesc = (a, b) => (b.date + b.dep).localeCompare(a.date + a.dep);
+function matches(t) {
+  const q = state.filter.trim().toLowerCase();
+  return !q || [t.from, t.to, trainLabel(t), t.date].join(' ').toLowerCase().includes(q);
+}
+function renderHomeRows(all) {
+  const rows = [...all].sort(byDateDesc).slice(0, 4);
+  $('#homeRows').innerHTML = rows.length ? rows.map(rowHtml).join('') : '<div class="empty">Aucun trajet pour l’instant.</div>';
+}
+function renderTripsList(all) {
+  const list = all.filter(matches);
+  const upcoming = list.filter(t => statusOf(t) !== 'past').sort((a, b) => -byDateDesc(a, b));
+  const past = list.filter(t => statusOf(t) === 'past').sort(byDateDesc);
+  let html = '';
+  if (upcoming.length) html += '<div class="group-label">À venir</div><div class="rows">' + upcoming.map(rowHtml).join('') + '</div>';
+  if (past.length) html += '<div class="group-label">Effectués</div><div class="rows">' + past.map(rowHtml).join('') + '</div>';
+  $('#tripsList').innerHTML = html || '<div class="empty">' + (state.filter ? 'Aucun trajet ne correspond à « ' + esc(state.filter) + ' ».' : 'Aucun trajet pour l’instant.') + '</div>';
+}
+function renderStats(st) {
+  const av = st.ref === 'avantage', card = +state.settings.cardPrice || 0, price = +state.settings.monthlyPrice || 0;
+  $('#netCard').innerHTML = '<span>' + (av ? 'Gagné avec Max plutôt que la Carte Avantage' : 'Gagné avec Max par rapport au plein tarif') + '</span>' +
+    '<b class="num ' + (st.netTotal >= 0 ? 'ok' : 'bad') + '">' + esc(signed(st.netTotal)) + '</b><span>depuis ' + esc(monthName(st.startMonth)) + ', abonnement déduit</span>';
+  $('#tiles').innerHTML =
+    '<div class="tile"><span>' + (av ? 'Évité vs Carte Av.' : 'Économisé') + '</span><b class="num">' + esc(eur(st.savedTotal)) + '</b></div>' +
+    '<div class="tile"><span>' + (av ? 'Coût réel de Max' : 'Abonnement') + '</span><b class="num">' + esc(eur(st.paidTotal)) + '</b></div>';
+  $('#chartTitle').textContent = 'Par mois';
+  $('#chartSub').textContent = 'Pointillés : ' + eur(st.cost) + ' par mois, le seuil pour être gagnant.';
+  const months = st.months.slice(-6), cost = st.cost;
+  const top = Math.max(cost, ...months.map(m => m.saved), 1) * 1.15, chartH = 172;
+  $('#chart').innerHTML = '<div class="chart">' +
+    (cost ? '<div class="thr" style="bottom:' + (cost / top * chartH) + 'px"></div>' : '') +
+    months.map(m => '<div class="bar-col"><span class="bar-val num">' + (m.saved ? esc(eur(Math.round(m.saved))) : '') + '</span><div class="bar ' + (m.future ? 'future' : m.saved >= cost ? 'hit' : '') +
+      '" style="height:' + Math.max(3, Math.max(0, m.saved) / top * chartH) + 'px"></div></div>').join('') + '</div>' +
+    '<div class="chart-x">' + months.map(m => '<span>' + esc(monthShort(m.key)) + '</span>').join('') + '</div>';
+  const base = av
+    ? 'Sans Max, tu prendrais la Carte Avantage Jeune (' + esc(eur(card)) + ' par an) : −30 % sur TGV INOUI et INTERCITÉS, plafonné en 2de à 49 € (moins de 1h30), 69 € (1h30 à 3 h) et 89 € (plus de 3 h), rien sur OUIGO. Max te coûte donc vraiment ' + esc(eur(cost)) + ' par mois (' + esc(eur(price)) + ' moins la carte que tu n’achètes pas).'
+    : 'Comparé au plein tarif barré sur SNCF Connect, ton abonnement coûte ' + esc(eur(cost)) + ' par mois.';
+  $('#statsLead').innerHTML = base + (st.avg ? ' Un trajet te fait gagner en moyenne <b>' + esc(eur(Math.round(st.avg))) + '</b> : il en faut <b>' + st.tripsToBreakEven + ' par mois</b> pour être gagnant.' + (st.futureSaved ? ' Déjà réservé pour plus tard : ' + esc(eur(st.futureSaved)) + '.' : '') : '');
+  $('#monthRows').innerHTML = [...st.months].reverse().map(m =>
+    '<div class="mrow"><b>' + esc(monthName(m.key)) + ' ' + m.key.slice(0, 4) + (m.future ? ' <span class="tag">À venir</span>' : '') + '</b>' +
+    '<b class="num ' + (m.future ? '' : m.net >= 0 ? 'ok' : 'bad') + '">' + (m.future ? esc(eur(m.saved)) : esc(signed(m.net))) + '</b>' +
+    '<span class="muted">' + m.count + ' trajet' + (m.count > 1 ? 's' : '') + ' · ' + esc(eur(m.saved)) + ' gagnés' + (m.tickets ? ' · ' + esc(eur(m.tickets)) + ' de billets' : '') + '</span>' +
+    '<span class="muted num">' + (m.future ? 'réservé' : '×' + (m.ratio || 0).toFixed(1).replace('.', ',')) + '</span></div>').join('');
+}
+
+// ---------- Feuilles ----------
+function openSheet(html) {
+  const sh = $('#sheet');
+  sh.innerHTML = '<div class="grab"></div>' + html;
+  sh.classList.add('on'); $('#backdrop').classList.add('on');
+  sh.scrollTop = 0;
+}
+function closeSheet() {
+  $('#sheet').classList.remove('on'); $('#backdrop').classList.remove('on');
+  const s = state.sheet, q = (s && (s.queue || (s.resume && s.resume.queue))) || [];
+  q.forEach(x => x.url && URL.revokeObjectURL(x.url));
+  state.sheet = null; state.form = null;
+}
+const stationOptions = '<datalist id="gares">' + P.stationNames.map(n => '<option value="' + esc(n) + '">').join('') + '</datalist>';
+const chip = (act, k, v, label, on) => '<button type="button" class="chipb' + (on ? ' on' : '') + '" data-act="' + act + '" data-k="' + k + '" data-v="' + esc(v) + '">' + esc(label) + '</button>';
+
+function fieldsHtml(d) {
+  const v = k => esc(d[k] == null ? '' : d[k]);
+  return stationOptions + '<div class="fields">' +
+    '<div class="field wide"><label for="f-from">Départ</label><input id="f-from" list="gares" value="' + v('from') + '" placeholder="Lille Flandres" autocomplete="off"></div>' +
+    '<div class="field wide"><label for="f-to">Arrivée</label><input id="f-to" list="gares" value="' + v('to') + '" placeholder="Paris Nord" autocomplete="off"></div>' +
+    '<div class="field wide"><label for="f-date">Date</label><input id="f-date" type="date" value="' + v('date') + '"></div>' +
+    '<div class="field"><label for="f-dep">Départ à</label><input id="f-dep" type="time" value="' + v('dep') + '"></div>' +
+    '<div class="field"><label for="f-arr">Arrivée à</label><input id="f-arr" type="time" value="' + v('arr') + '"></div>' +
+    '<div class="field"><label for="f-orig">Plein tarif (€)</label><input id="f-orig" type="text" inputmode="decimal" value="' + v('originalPrice') + '" placeholder="71"></div>' +
+    '<div class="field"><label for="f-paid">Prix payé (€)</label><input id="f-paid" type="text" inputmode="decimal" value="' + esc(d.paidPrice ?? 0) + '"></div>' +
+    '<div class="field wide"><label>Train</label><div class="opt-row" id="f-family"></div></div>' +
+    '<div class="field wide"><label>Classe</label><div class="opt-row" id="f-classe"></div></div></div>';
+}
+function formHtml(d, mode, openFields) {
+  return '<div id="f-offers"></div><div id="f-ticket"></div><div id="f-est"></div><div id="f-preview"></div>' +
+    (mode === 'edit'
+      ? '<label class="toggle" id="f-confirmed-wrap"><span class="grow">Confirmé dans mon espace MAX</span><input type="checkbox" id="f-confirmed"' + (d.confirmed ? ' checked' : '') + '></label>'
+      : '<label class="toggle" id="f-remind-wrap"><span class="grow" id="f-remind-txt">Rappels</span><input type="checkbox" id="f-remind" checked></label>') +
+    '<details class="edit-box" id="f-details"' + (openFields ? ' open' : '') + '><summary>Modifier les infos</summary><div class="edit-body">' + fieldsHtml(d) + '</div></details>' +
+    '<div class="err" id="f-err" role="alert"></div>';
+}
+const money = s => { const t = String(s ?? '').trim().replace(',', '.').replace(/[^\d.]/g, ''); return t === '' ? null : Math.round(parseFloat(t) * 100) / 100; };
+function readForm() {
+  const g = id => ($('#' + id) || {}).value || '';
+  const f = state.form || {};
+  const d = { from: g('f-from').trim(), to: g('f-to').trim(), date: g('f-date'), dep: g('f-dep'), arr: g('f-arr'),
+    originalPrice: money(g('f-orig')), paidPrice: money(g('f-paid')) ?? 0, family: f.family || 'INOUI', classe: f.classe || '2de',
+    priceEstimated: !!f.priceEstimated, trainNo: f.trainNo || '' };
+  d.durationMin = P.minutesBetween(d.dep, d.arr) || f.durationMin || null;
+  return d;
+}
+function ticketHtml(t) {
+  const dur = P.durationOf(t);
+  const st = (time, name, ph, right) => '<div class="tk-st' + (right ? ' right' : '') + (name ? '' : ' miss') + '"><b class="num">' + esc(time || '--:--') + '</b><span>' + esc(name || ph) + '</span></div>';
+  return '<div class="ticket"><div class="tk-top"><span>' + esc(t.date ? fmtLong(P.parseISO(t.date)) : 'Date à compléter') + '</span><span>' + esc(trainLabel(t) + ' · ' + (t.classe === '1re' ? '1re' : '2de')) + '</span></div>' +
+    '<div class="tk-route">' + st(t.dep, t.from, 'Départ ?') + '<div class="tk-line"><span>' + esc(dur ? fmtDur(dur) : ' ') + '</span><i></i></div>' + st(t.arr, t.to, 'Arrivée ?', true) + '</div></div>';
+}
+function renderFormParts() {
+  const f = state.form; if (!f || !$('#f-family')) return;
+  $('#f-family').innerHTML = Object.entries(FAMILY).map(([k, l]) => chip('setopt', 'family', k, l, f.family === k)).join('');
+  $('#f-classe').innerHTML = chip('setopt', 'classe', '2de', '2de classe', f.classe !== '1re') + chip('setopt', 'classe', '1re', '1re classe', f.classe === '1re');
+  const offers = f.offers || [];
+  $('#f-offers').innerHTML = offers.length > 1 ? '<div class="field"><label>Tarifs lus : touche celui que tu prends</label><div class="opt-row">' +
+    offers.map((o, i) => chip('pickoffer', 'o', i, (o.classe || 'Autre tarif') + ' · ' + eur(o.paid) + (o.plein != null && o.plein !== o.paid ? ' au lieu de ' + eur(o.plein) : ''), f.offerIdx === i)).join('') + '</div></div>' : '';
+  $('#f-est').innerHTML = f.priceEstimated && f.estimateNote ? '<div class="note-est">' + esc(f.estimateNote) + '</div>' : '';
+  updatePreview();
+}
+function updatePreview() {
+  if (!state.form || !$('#f-preview')) return;
+  const t = readForm();
+  $('#f-ticket').innerHTML = ticketHtml(t);
+  const box = $('#f-preview');
+  if (t.originalPrice == null || isNaN(t.originalPrice)) box.innerHTML = '';
+  else {
+    const av = P.avantagePrice(t), dur = P.durationOf(t), cap = t.family !== 'OUIGO' && t.classe !== '1re' ? P.capFor(dur) : null, raw = Math.floor(t.originalPrice * 0.7 + 1e-9);
+    const foot = t.family === 'OUIGO' ? 'La Carte Avantage ne marche pas sur OUIGO : sans Max, tu paierais le prix OUIGO.'
+      : t.classe === '1re' ? 'Carte Avantage : −30 %, pas de plafond en 1re.'
+      : cap != null && raw > cap ? 'Carte Avantage : plafond ' + eur(cap) + ' pour ' + fmtDur(dur) + ' de trajet (−30 % donnerait ' + eur(raw) + ').'
+      : cap != null ? 'Carte Avantage : −30 % (plafond ' + eur(cap) + ' pour ' + fmtDur(dur) + ').'
+      : 'Carte Avantage : −30 %. Ajoute l’heure d’arrivée pour appliquer le plafond.';
+    box.innerHTML = '<div class="cmp"><div><span>Plein tarif</span><b class="num">' + esc((t.priceEstimated ? '≈ ' : '') + eur(t.originalPrice)) + '</b></div>' +
+      '<div><span>Carte Avantage</span><b class="num">' + esc(eur(av)) + '</b></div>' +
+      '<div class="me"><span>' + (t.paidPrice > 0 ? 'Payé' : 'Avec Max') + '</span><b class="num">' + esc(eur(t.paidPrice)) + '</b></div></div>' +
+      '<div class="cmp-foot">Tu gagnes <b>' + esc(signed(P.saving(t, 'plein'))) + '</b> vs plein tarif et <b>' + esc(signed(P.saving(t, 'avantage'))) + '</b> vs Carte Avantage. ' + esc(foot) + '</div>';
+  }
+  const wrap = $('#f-remind-wrap');
+  if (wrap) {
+    const txt = $('#f-remind-txt'), cb = $('#f-remind');
+    if (!P.isMaxTrip(t)) { wrap.classList.add('hidden'); cb.checked = false; return; }
+    wrap.classList.remove('hidden');
+    const slots = t.date && t.dep ? P.reminderSlots(t, now(), state.settings) : [];
+    const where = state.mcp ? 'Google Agenda' : 'ton agenda';
+    if (t.date && t.dep && !slots.length) { cb.checked = false; cb.disabled = true; txt.innerHTML = 'Trop tard pour un rappel<small>La limite était la veille à ' + esc(dlLabel()) + '.</small>'; return; }
+    cb.disabled = false;
+    if (!cb.dataset.touched) cb.checked = true;
+    const when = slots.length ? slots.map(s => fmtHour(s.start)).join(' et ') + ' le ' + fmtShort(slots[0].start) : hourOf(state.settings.remind1) + ' et ' + hourOf(state.settings.remind2) + ' la veille';
+    txt.innerHTML = (slots.length === 1 ? 'Rappel' : 'Rappels') + ' dans ' + esc(where) + '<small>' + esc(when) + ' · 15 min, notification à l’heure</small>';
+  }
+}
+function fillForm(d, force) {
+  const set = (id, val) => { const el = $('#' + id); if (el && val != null && val !== '' && (force || !el.value || el.dataset.auto === '1')) { el.value = val; el.dataset.auto = '1'; } };
+  set('f-from', d.from); set('f-to', d.to); set('f-date', d.date); set('f-dep', d.dep); set('f-arr', d.arr); set('f-orig', d.originalPrice);
+  const paid = $('#f-paid'); if (paid && (force || paid.dataset.auto === '1' || paid.value === '' || paid.value === '0')) { paid.value = d.paidPrice ?? 0; paid.dataset.auto = '1'; }
+  const offers = d.offers || [];
+  const pick = offers.findIndex(o => o.paid === d.paidPrice && (o.plein === d.originalPrice || o.plein == null));
+  state.form = { ...state.form, family: d.family || 'INOUI', classe: d.classe || '2de', priceEstimated: !!d.priceEstimated, estimateNote: d.estimateNote || '',
+    offers, offerIdx: pick, durationMin: d.durationMin || null, trainNo: d.trainNo || '' };
+  renderFormParts();
+}
+
+function openReview(kind, queue) { state.sheet = { kind, queue: queue || [], idx: 0 }; renderReview(); }
+function renderReview() {
+  const s = state.sheet, item = s.queue[s.idx];
+  const count = s.queue.length > 1 ? ' <span class="muted" style="font-size:15px">' + (s.idx + 1) + '/' + s.queue.length + '</span>' : '';
+  let top = '';
+  if (s.kind === 'scan') top = '<div class="scan-box"><img alt="Ta capture" src="' + esc(item.url) + '"><div><div id="ocrMsg" class="help">Lecture de la capture sur ton téléphone…</div><div class="prog"><span id="ocrBar"></span></div></div></div>';
+  if (s.kind === 'paste') top = '<div class="pz" id="pz" contenteditable="true" role="textbox" aria-label="Zone où coller la capture ou son texte" data-ph="Touche ici, puis « Coller » : une capture d’écran ou son texte"></div>' +
+    '<div class="pz-msg" id="pz-msg"></div>' +
+    (CAN_DOWNLOAD && navigator.clipboard && navigator.clipboard.read ? '<button class="btn btn-white btn-full" data-act="readclip">' + ICON.paste + 'Coller ma capture</button>' : '') +
+    '<p class="help">Astuce iPhone : après la capture, touche la vignette puis OK → « Copier et supprimer ». Rien ne s’accumule dans Photos.</p>';
+  state.form = { family: 'INOUI', classe: '2de', offers: [], offerIdx: -1 };
+  const title = s.kind === 'manual' ? 'Nouveau trajet' : s.kind === 'paste' ? 'Coller une capture' : 'Vérifie le trajet';
+  openSheet('<div class="sheet-head"><h3 id="sheetTitle">' + title + count + '</h3><button class="x" data-act="close" aria-label="Fermer">' + ICON.close + '</button></div>' +
+    top + formHtml({ paidPrice: 0 }, 'new', s.kind === 'manual') +
+    '<details class="raw hidden" id="rawBox"><summary>Texte lu sur la capture</summary><pre id="rawText"></pre></details>' +
+    '<div class="btns"><button class="btn btn-white" data-act="save">Enregistrer</button><button class="btn btn-glass" data-act="skip">' + (s.queue.length > 1 && s.idx < s.queue.length - 1 ? 'Passer' : 'Annuler') + '</button></div>');
+  renderFormParts();
+  if (s.kind === 'scan') runOcr(item);
+  if (s.kind === 'paste') bindPasteZone();
+}
+async function runOcr(item) {
+  const msg = () => $('#ocrMsg'), bar = () => $('#ocrBar');
+  const current = () => state.sheet && state.sheet.queue && state.sheet.queue[state.sheet.idx] === item;
+  try {
+    const text = await OCR.read(item.file, m => {
+      if (!msg() || !current()) return;
+      if (m.status === 'recognizing text') { msg().textContent = 'Lecture du texte…'; bar().style.width = Math.round(m.progress * 100) + '%'; }
+      else if (/load|initializ/.test(m.status)) msg().textContent = 'Préparation de la lecture (la première fois prend quelques secondes)…';
+    });
+    if (!current() || !msg()) return;
+    const d = P.parseText(text, now());
+    fillForm(d, false);
+    $('#rawText').textContent = text; $('#rawBox').classList.remove('hidden');
+    bar().style.width = '100%';
+    msg().innerHTML = d.found >= 5 ? '<span class="ok">Tout est lu.</span> Vérifie le billet avant d’enregistrer.'
+      : '<span class="warn">' + d.found + ' info' + (d.found > 1 ? 's' : '') + ' sur 5 trouvée' + (d.found > 1 ? 's' : '') + '.</span> Complète dans « Modifier les infos ».';
+    if (d.found < 5) $('#f-details').open = true;
+  } catch (e) {
+    if (!current() || !msg()) return;
+    bar().style.width = '0%';
+    msg().innerHTML = '<span class="warn">Lecture automatique indisponible ici.</span> Remplis « Modifier les infos », ou colle le texte de la capture (Texte en direct).';
+    $('#f-details').open = true;
+  }
+}
+function validate(d) {
+  const missing = [];
+  if (!d.from) missing.push(['f-from', 'départ']); if (!d.to) missing.push(['f-to', 'arrivée']);
+  if (!d.date) missing.push(['f-date', 'date']); if (!d.dep) missing.push(['f-dep', 'heure de départ']);
+  if (d.originalPrice == null || isNaN(d.originalPrice)) missing.push(['f-orig', 'plein tarif']);
+  document.querySelectorAll('.field.miss').forEach(f => f.classList.remove('miss'));
+  missing.forEach(([id]) => $('#' + id).parentElement.classList.add('miss'));
+  $('#f-err').textContent = missing.length ? 'Il manque : ' + missing.map(m => m[1]).join(', ') + '.' : '';
+  if (missing.length) $('#f-details').open = true;
+  return !missing.length;
+}
+async function saveReview() {
+  const s = state.sheet, d = readForm(), err = $('#f-err');
+  if (!validate(d)) return;
+  const wantRem = $('#f-remind') && $('#f-remind').checked && P.isMaxTrip(d);
+  const trip = { id: newId(), ...d, confirmed: false, source: s.kind, createdAt: new Date().toISOString() };
+  try { await store.saveTrip(trip); } catch (e) { err.textContent = e && e.code === 'quota_exceeded' ? 'Espace plein : supprime d’anciens trajets.' : 'Enregistrement impossible pour l’instant. Réessaie.'; return; }
+  toast('Trajet ajouté · ' + signed(P.saving(trip, ref())) + ' ' + (ref() === 'avantage' ? 'vs Carte Avantage' : 'vs plein tarif'));
+  const next = () => { if (s.idx < s.queue.length - 1) { s.idx++; renderReview(); } else closeSheet(); };
+  const rems = wantRem ? buildReminders(trip) : [];
+  if (rems.length) { if (state.mcp) { next(); addReminders(trip, null); } else openCalFallback(trip, rems, null); }
+  else next();
+}
+function openEdit(t) {
+  state.sheet = { kind: 'edit', id: t.id };
+  state.form = { family: t.family || (/ouigo/i.test(t.train || '') ? 'OUIGO' : 'INOUI'), classe: t.classe || '2de', priceEstimated: !!t.priceEstimated,
+    estimateNote: t.priceEstimated ? 'Plein tarif estimé : corrige-le dans « Modifier les infos » si tu connais le vrai prix.' : '', offers: [], offerIdx: -1, durationMin: t.durationMin || null, trainNo: t.trainNo || '' };
+  openSheet('<div class="sheet-head"><h3 id="sheetTitle">Trajet' + (t.demo ? ' <span class="tag">Exemple</span>' : '') + '</h3><button class="x" data-act="close" aria-label="Fermer">' + ICON.close + '</button></div>' +
+    formHtml(t, 'edit', false) +
+    (t.reminder ? '<p class="help">' + ICON.check.replace('class="i"', 'class="i" style="width:16px;height:16px;vertical-align:-3px"') + ' Rappels ajoutés à ton agenda.</p>' : '') +
+    (!t.reminder && buildReminders(t).length ? reminderControl(t, 'btn-glass btn-full') : '') +
+    '<div class="btns"><button class="btn btn-white" data-act="update">Enregistrer</button><button class="btn btn-danger" data-act="delete" data-id="' + esc(t.id) + '">Supprimer</button></div>');
+  renderFormParts();
+  if (!P.isMaxTrip(t)) $('#f-confirmed-wrap').classList.add('hidden');
+}
+async function updateEdit(btn) {
+  const t = findTrip(state.sheet.id); if (!t) return closeSheet();
+  if (t.demo) { closeSheet(); return toast('C’est un exemple : ajoute un vrai trajet pour le modifier.'); }
+  const d = readForm();
+  if (!validate(d)) return;
+  btn.disabled = true;
+  try { await store.saveTrip({ ...t, ...d, confirmed: $('#f-confirmed').checked }); closeSheet(); toast('Trajet mis à jour'); }
+  catch (e) { btn.disabled = false; $('#f-err').textContent = 'Enregistrement impossible pour l’instant. Réessaie.'; }
+}
+
+// ---------- Réglages, sauvegarde ----------
+function openSettings() {
+  const s = state.settings;
+  const saveMode = { db: 'synchronisée avec ton compte Claude.', local: 'gardée sur ce téléphone.', memory: 'non gardée : ce navigateur bloque le stockage.', loading: 'chargement…' }[store.mode];
+  state.sheet = { kind: 'settings' };
+  openSheet('<div class="sheet-head"><h3 id="sheetTitle">Réglages</h3><button class="x" data-act="close" aria-label="Fermer">' + ICON.close + '</button></div>' +
+    '<div class="edit-box" style="padding:16px"><div class="fields">' +
+    '<div class="field"><label for="s-plan">Formule</label><input id="s-plan" value="' + esc(s.plan) + '"></div>' +
+    '<div class="field"><label for="s-price">Prix par mois (€)</label><input id="s-price" type="text" inputmode="decimal" value="' + esc(s.monthlyPrice) + '"></div>' +
+    '<div class="field"><label for="s-start">Début</label><input id="s-start" type="month" value="' + esc(s.startMonth) + '"></div>' +
+    '<div class="field"><label for="s-card">Carte Avantage (€/an)</label><input id="s-card" type="text" inputmode="decimal" value="' + esc(s.cardPrice) + '"></div></div></div>' +
+    '<div class="edit-box" style="padding:16px"><div class="fields">' +
+    '<div class="field wide"><label for="s-dl">Confirmer au plus tard la veille à</label><input id="s-dl" type="time" value="' + esc(s.deadline) + '"></div>' +
+    '<div class="field"><label for="s-r1">1er rappel (la veille)</label><input id="s-r1" type="time" value="' + esc(s.remind1) + '"></div>' +
+    '<div class="field"><label for="s-r2">Dernier rappel</label><input id="s-r2" type="time" value="' + esc(s.remind2) + '"></div></div></div>' +
+    '<p class="help">Règle SNCF : un trajet Max se confirme à partir de J-2 et au plus tard la veille à 17 h, sinon il est annulé. Chaque rappel dure 15 min, avec une notification à l’heure.</p>' +
+    '<div class="err" id="s-err" role="alert"></div>' +
+    '<button class="btn btn-white btn-full" data-act="savesettings">Enregistrer</button>' +
+    '<div class="card-head" style="margin-top:8px"><h2 style="font-size:17px">Sauvegarde</h2></div>' +
+    '<p class="help">Tes trajets : ' + esc(saveMode) + ' Agenda : ' + (state.mcp ? 'ajout direct via ton connecteur Google Calendar de Claude.' : CAN_DOWNLOAD ? 'Calendrier de l’iPhone ou liens Google Agenda.' : 'liens Google Agenda pré-remplis.') + '</p>' +
+    '<div class="btns"><button class="btn btn-glass" data-act="export">' + (CAN_DOWNLOAD ? 'Exporter' : 'Copier mes données') + '</button><button class="btn btn-glass" data-act="importfile">Importer</button></div>' +
+    '<p class="help">Pour passer d’une version à l’autre : « ' + (CAN_DOWNLOAD ? 'Exporter' : 'Copier mes données') + ' » ici, puis « Coller » (ou « Importer » le fichier) dans l’autre version.</p>');
+}
+async function saveSettings(btn) {
+  const price = money($('#s-price').value), card = money($('#s-card').value);
+  if (!(price >= 0)) { $('#s-err').textContent = 'Indique le prix mensuel de ton abonnement.'; return; }
+  btn.disabled = true;
+  try {
+    await store.saveSettings({ ...state.settings, plan: $('#s-plan').value.trim() || 'Max', monthlyPrice: price, startMonth: $('#s-start').value || '',
+      cardPrice: card >= 0 ? card : 49, deadline: $('#s-dl').value || '17:00', remind1: $('#s-r1').value || '09:00', remind2: $('#s-r2').value || '14:00' });
+    closeSheet(); toast('Réglages enregistrés');
+  } catch (e) { btn.disabled = false; $('#s-err').textContent = 'Enregistrement impossible pour l’instant. Réessaie.'; }
+}
+function backupJson() { return JSON.stringify({ app: 'mon-tgvmax', version: 1, exportedAt: new Date().toISOString(), settings: state.settings, trips: state.trips }, null, 1); }
+async function exportData() {
+  if (!state.trips.length) return toast('Rien à exporter : ajoute d’abord un trajet.');
+  if (CAN_DOWNLOAD) { download('mon-tgvmax-' + P.isoDate(now()) + '.json', 'application/json', backupJson()); return toast('Sauvegarde exportée'); }
+  try { await navigator.clipboard.writeText(backupJson()); toast('Données copiées : colle-les dans l’autre version'); }
+  catch (e) { toast('Copie refusée ici : réessaie depuis l’app iPhone.'); }
+}
+function openImport(text) {
+  let data;
+  try { data = JSON.parse(text); } catch (e) { return toast('Ce fichier n’est pas une sauvegarde Mon TGV Max.'); }
+  if (!data || data.app !== 'mon-tgvmax' || !Array.isArray(data.trips)) return toast('Ce fichier n’est pas une sauvegarde Mon TGV Max.');
+  const have = new Set(state.trips.map(t => t.id)), fresh = data.trips.filter(t => t && t.id && !have.has(t.id));
+  state.sheet = { kind: 'import', data, fresh };
+  openSheet('<div class="sheet-head"><h3 id="sheetTitle">Importer</h3><button class="x" data-act="close" aria-label="Fermer">' + ICON.close + '</button></div>' +
+    '<p class="help" style="font-size:15px;color:#fff">' + fresh.length + ' nouveau' + (fresh.length > 1 ? 'x' : '') + ' trajet' + (fresh.length > 1 ? 's' : '') + ' et tes réglages. Les trajets déjà présents ne sont pas dupliqués.</p>' +
+    '<button class="btn btn-white btn-full" data-act="doimport">Importer</button>');
+}
+async function doImport(btn) {
+  const s = state.sheet; if (!s || s.kind !== 'import') return;
+  btn.disabled = true;
+  try {
+    for (const t of s.fresh) await store.saveTrip(t);
+    if (s.data.settings) await store.saveSettings({ ...state.settings, ...s.data.settings });
+    closeSheet(); toast(s.fresh.length + ' trajet' + (s.fresh.length > 1 ? 's importés' : ' importé'));
+  } catch (e) { btn.disabled = false; toast('Import interrompu : réessaie.'); }
+}
+
+// ---------- Événements ----------
+document.addEventListener('click', async e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const act = el.dataset.act, id = el.dataset.id;
+  switch (act) {
+    case 'tab': state.tab = el.dataset.tab; renderAll(); window.scrollTo({ top: 0 }); break;
+    case 'scope': state.scope = state.scope === 'month' ? 'all' : 'month'; renderAll(); break;
+    case 'compare': if (state.settings.compare !== el.dataset.v) store.saveSettings({ ...state.settings, compare: el.dataset.v }).catch(() => {}); break;
+    case 'scan': $('#file').click(); break;
+    case 'paste': openReview('paste'); setTimeout(() => { const z = $('#pz'); if (z && !CAN_DOWNLOAD) z.focus(); }, 320); break;
+    case 'readclip': readClipboard(); break;
+    case 'manual': openReview('manual'); break;
+    case 'settings': openSettings(); break;
+    case 'close': if (state.sheet && state.sheet.kind === 'cal') finishCal(false); else closeSheet(); break;
+    case 'skip': { const s = state.sheet; if (s && s.queue && s.idx < s.queue.length - 1) { s.idx++; renderReview(); } else closeSheet(); break; }
+    case 'save': el.disabled = true; await saveReview(); if (el.isConnected) el.disabled = false; break;
+    case 'update': updateEdit(el); break;
+    case 'savesettings': saveSettings(el); break;
+    case 'export': exportData(); break;
+    case 'importfile': $('#importFile').click(); break;
+    case 'doimport': doImport(el); break;
+    case 'setopt':
+      state.form[el.dataset.k] = el.dataset.v;
+      state.form.offerIdx = -1;
+      renderFormParts(); break;
+    case 'pickoffer': {
+      const o = state.form.offers[+el.dataset.v]; if (!o) break;
+      state.form.offerIdx = +el.dataset.v;
+      $('#f-paid').value = o.paid; $('#f-paid').dataset.auto = '1';
+      if (o.plein != null) { $('#f-orig').value = o.plein; state.form.priceEstimated = false; }
+      if (o.classe === '1re' || o.classe === '2de') state.form.classe = o.classe;
+      renderFormParts(); break;
+    }
+    case 'edit': { const t = findTrip(id); if (t) openEdit(t); break; }
+    case 'remind': { const t = findTrip(id); if (t) addReminders(t, el); break; }
+    case 'ics': {
+      const s = state.sheet, t = s && findTrip(s.tripId); if (!t) break;
+      download('rappels-tgvmax.ics', 'text/calendar', buildIcs(t, s.rems));
+      s.icsDone = true; el.classList.replace('btn-white', 'btn-glass'); el.innerHTML = ICON.check + 'Fichier de rappels ouvert';
+      break;
+    }
+    case 'linkdone': {
+      const s = state.sheet; if (!s || s.kind !== 'cal') break;
+      s.done.add(el.dataset.n);
+      setTimeout(() => { if (el.isConnected) { el.classList.replace('btn-white', 'btn-glass'); el.innerHTML = ICON.check + 'Ouvert dans Google Agenda'; } }, 50);
+      if (s.done.size >= s.total && !CAN_DOWNLOAD) setTimeout(() => finishCal(true), 700);
+      break;
+    }
+    case 'caldone': { const s = state.sheet; finishCal(!!(s && (s.icsDone || (s.done && s.done.size)))); break; }
+    case 'confirm': {
+      const t = findTrip(id); if (!t) break;
+      if (t.demo) { toast('C’est un exemple : ajoute un vrai trajet.'); break; }
+      await store.saveTrip({ ...t, confirmed: true }); toast('Noté : trajet confirmé ✓'); break;
+    }
+    case 'delete': {
+      if (el.dataset.armed !== '1') { el.dataset.armed = '1'; el.textContent = 'Confirmer'; break; }
+      const t = findTrip(id);
+      if (t && t.demo) { closeSheet(); toast('C’est un exemple : il disparaîtra avec ton premier trajet.'); break; }
+      try { await store.deleteTrip(id); closeSheet(); toast('Trajet supprimé'); } catch (err) { $('#f-err').textContent = 'Suppression impossible pour l’instant.'; }
+      break;
+    }
+  }
+});
+$('#file').addEventListener('change', e => { const files = [...e.target.files]; e.target.value = ''; if (files.length) startScanWith(files); });
+$('#importFile').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (f) openImport(await f.text()); });
+$('#q').addEventListener('input', e => { state.filter = e.target.value; if (state.tab !== 'trips') state.tab = 'trips'; renderAll(); });
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset && t.dataset.auto) delete t.dataset.auto;
+  if (t.id === 'f-orig' && state.form) { state.form.priceEstimated = false; $('#f-est').innerHTML = ''; }
+  if (t.id === 'f-remind') t.dataset.touched = '1';
+  if (t.closest && t.closest('#sheet') && state.form) updatePreview();
+}, true);
+document.addEventListener('change', e => { if (e.target.id === 'f-remind') e.target.dataset.touched = '1'; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#sheet').classList.contains('on')) { if (state.sheet && state.sheet.kind === 'cal') finishCal(false); else closeSheet(); } });
+setInterval(() => { if (!$('#sheet').classList.contains('on')) renderAll(); }, 60000);
+
+// Hors de Claude (GitHub Pages) : fonctionne hors ligne une fois ouvert
+if (!IN_FRAME && !window.claude && 'serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+
+renderAll();
+store.init(); initMcp();
+</script>
+</body>
+</html>

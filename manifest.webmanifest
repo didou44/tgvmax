@@ -1,0 +1,17 @@
+{
+  "name": "Mon TGV Max",
+  "short_name": "TGV Max",
+  "description": "Rentabilité de ton abonnement Max et rappels de confirmation",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#15123A",
+  "theme_color": "#A236F0",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
